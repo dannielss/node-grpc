@@ -4,7 +4,8 @@ import * as protoLoader from '@grpc/proto-loader';
 import { ProtoGrpcType } from './proto/random';
 import { RandomHandlers } from './proto/randomPackage/Random';
 import { TodoResponse } from './proto/randomPackage/TodoResponse';
-import { TodoRequest } from './proto/randomPackage/TodoRequest';
+import { ChatRequest } from './proto/randomPackage/ChatRequest';
+import { ChatResponse } from './proto/randomPackage/ChatResponse';
 
 const PORT = 8082;
 const PROTO_FILE = "./proto/random.proto";
@@ -26,7 +27,9 @@ function main() {
 
 const todoList: TodoResponse = {
   todos: []
-}
+};
+
+const callObjByUsername = new Map<string, grpc.ServerDuplexStream<ChatRequest, ChatResponse>>()
 
 function getServer() {
   const server = new grpc.Server();
@@ -55,10 +58,51 @@ function getServer() {
         todoList.todos?.push(chunk);
         console.log(todoList);
       });
-      
+
       call.on("end", () => {
         callback(null, { todos: todoList.todos });
       });
+    },
+    Chat: (call) => {
+      call.on("data", (req) => {
+        const username = call.metadata.get('username')[0] as string
+        const msg = req.message
+        console.log(username, req.message)
+
+
+        for(let [user, usersCall] of callObjByUsername) {
+          if(username !== user) {
+            usersCall.write({
+              username: username,
+              message: msg
+            })
+          }
+        }
+
+        if (callObjByUsername.get(username) === undefined) {
+          callObjByUsername.set(username, call)
+        }
+      })
+
+      call.on("end", () => {
+        const username = call.metadata.get('username')[0] as string
+        callObjByUsername.delete(username)
+        for(let [user, usersCall] of callObjByUsername) {
+            usersCall.write({
+              username: username,
+              message: "Has Left the Chat!"
+            })
+        }
+        console.log(`${username} is ending their chat session`)
+
+        call.write({
+          username: "Server",
+          message: `See you later ${username}`
+        })
+
+        call.end()
+      })
+
     }
   } as RandomHandlers);
 
