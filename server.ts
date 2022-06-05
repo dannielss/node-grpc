@@ -26,7 +26,23 @@ function getServer() {
   const server = new grpc.Server();
   server.addService(randomPackage.Random.service, {
     "PingPong": (req, res) => {
-      console.log(req, res);
+      console.log(req.request);
+      res(null, { message: "Pong!"})
+    },
+    "RandomNumbers": (call) => {
+      const { maxVal = 10} = call.request;
+
+      let runCount = 0;
+      
+      const id = setInterval(() => {
+        runCount += 1;
+        call.write({ number: Math.floor(Math.random() * maxVal )});
+
+        if(runCount >= 10) {
+          clearInterval(id);
+          call.end();
+        };
+      }, 500);
     }
   } as RandomHandlers);
 

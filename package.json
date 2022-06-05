@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "proto:gen": "yarn proto-loader-gen-types --grpcLib=@grpc/grpc-js --outDir=proto/ proto/*.proto",
+    "proto:gen": "proto-loader-gen-types --grpcLib=@grpc/grpc-js --outDir=proto/ proto/*.proto",
     "start": "ts-node server",
     "client": "ts-node client"
   },
