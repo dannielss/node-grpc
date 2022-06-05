@@ -29,13 +29,24 @@ function onClientReady() {
   //   console.log(result);
   // });
 
-  const stream = client.RandomNumbers({ maxVal: 54  });
+  // const stream = client.RandomNumbers({ maxVal: 54  });
 
-  stream.on("data", (chunk) => {
-    console.log(chunk);
-  });
+  // stream.on("data", (chunk) => {
+  //   console.log(chunk);
+  // });
 
-  stream.on("end", () => {
-    console.log("Communication ended");
+  // stream.on("end", () => {
+  //   console.log("Communication ended");
+  // });
+
+  const stream = client.TodoList((err, result) => {
+    if(err) return console.error(err);
+
+    console.log(result);
   });
+  
+  stream.write({ todo: "walk the dog", status: "done" });
+  stream.write({ todo: "make coffee", status: "done" });
+  stream.write({ todo: "get a good job", status: "completed" });
+  stream.end();
 };
